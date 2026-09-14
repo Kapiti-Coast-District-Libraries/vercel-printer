@@ -36,29 +36,31 @@ export default async function handler(req, res) {
     const word = $('h1').first().text().trim() || 'Unknown';
     const translation = $('h2').first().text().trim() || '';
 
-    // Collect all paragraphs, bullet items, and text blocks in document order
-    const details = [];
-    $('p, li, .kupu-content, .kupu').each((i, el) => {
+    const examples = [];
+    $('p, li').each((i, el) => {
       const text = $(el).text().trim().replace(/\s+/g, ' ');
-      if (
-        text &&
-        text !== word &&
-        text !== translation &&
-        !text.includes('Download the PDF') &&
-        !text.includes('Kupu o te Rā') &&
-        !text.includes('Copyright') &&
-        text.length > 2
-      ) {
-        if (!details.includes(text)) {
-          details.push(text);
-        }
+      const lower = text.toLowerCase();
+
+      // Exclude titles, header translations, cross-references, and meta content
+      const isUnwanted =
+        !text ||
+        text === word ||
+        text === translation ||
+        lower.startsWith('see also') ||
+        lower.includes('download the pdf') ||
+        lower.includes('kupu o te rā') ||
+        lower.includes('copyright') ||
+        text.length < 3;
+
+      if (!isUnwanted && !examples.includes(text)) {
+        examples.push(text);
       }
     });
 
     return res.status(200).json({
       word,
       translation,
-      details
+      examples
     });
   } catch (error) {
     return res.status(500).json({ error: 'Failed to scrape Māori Word of the Day: ' + error.message });
