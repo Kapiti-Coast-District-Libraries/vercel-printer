@@ -1,0 +1,5 @@
+{
+  "name": "Thermal Receipt Image Printer",
+  "description": "Upload and process images for printing on USB thermal receipt printers with high-quality dithering.",
+  "requestFramePermissions": ["usb"]
+}
