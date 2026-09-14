@@ -6,7 +6,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig(({ mode }) => {
 
   return {
-    base: '/Epson-Image-Printer/',
+    base: '/',
     server: {
       port: 3000,
       host: '0.0.0.0',
