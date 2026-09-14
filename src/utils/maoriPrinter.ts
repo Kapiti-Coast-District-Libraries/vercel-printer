@@ -58,24 +58,24 @@ export async function generateMaoriWordImage(): Promise<string> {
 
   const word = data.word || '';
   const translation = data.translation || '';
-  const details: string[] = data.details || data.examples || [];
+  const examples: string[] = data.examples || [];
 
   const width = 576;
   const dummyCanvas = document.createElement('canvas');
   const dCtx = dummyCanvas.getContext('2d')!;
 
-  // Dynamic canvas height calculation
+  // Dynamic Canvas Height
   let calculatedHeight = 220;
   dCtx.font = 'bold 22px sans-serif';
   calculatedHeight += measureHeight(dCtx, translation, width - 80, 28);
 
-  if (details.length > 0) {
+  if (examples.length > 0) {
     calculatedHeight += 60;
-    for (const item of details) {
-      const isBullet = item.startsWith('-') || item.startsWith('See also');
-      dCtx.font = isBullet ? 'italic 16px sans-serif' : '18px sans-serif';
-      const lh = isBullet ? 22 : 26;
-      calculatedHeight += measureHeight(dCtx, item, width - 80, lh) + 8;
+    for (const item of examples) {
+      const isNote = item.startsWith('-');
+      dCtx.font = isNote ? 'italic 16px sans-serif' : '18px sans-serif';
+      const lh = isNote ? 22 : 26;
+      calculatedHeight += measureHeight(dCtx, item, width - 80, lh) + 6;
     }
   }
 
@@ -87,14 +87,13 @@ export async function generateMaoriWordImage(): Promise<string> {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Canvas context unavailable');
 
-  // Background & Outer Border
+  // Outer Box & Header
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, width, height);
   ctx.lineWidth = 4;
   ctx.strokeStyle = '#000000';
   ctx.strokeRect(15, 15, width - 30, height - 30);
 
-  // Receipt Header
   ctx.fillStyle = '#000000';
   ctx.font = 'bold 30px monospace';
   ctx.textAlign = 'center';
@@ -107,15 +106,15 @@ export async function generateMaoriWordImage(): Promise<string> {
   ctx.lineTo(width - 35, 105);
   ctx.stroke();
 
-  // Word & Main Translation
+  // Primary Word & Meaning
   ctx.font = 'bold 44px sans-serif';
   ctx.fillText(word, width / 2, 165);
 
   ctx.font = 'bold 22px sans-serif';
   let currentY = wrapText(ctx, translation, width / 2, 215, width - 80, 28);
 
-  // Content Details Section
-  if (details.length > 0) {
+  // Sentences Section
+  if (examples.length > 0) {
     currentY += 15;
     ctx.beginPath();
     ctx.moveTo(60, currentY);
@@ -125,14 +124,14 @@ export async function generateMaoriWordImage(): Promise<string> {
 
     currentY += 30;
     ctx.font = 'bold 18px sans-serif';
-    ctx.fillText('TAUIRA & KŌRERO / DETAILS', width / 2, currentY);
+    ctx.fillText('TAUIRA / EXAMPLES', width / 2, currentY);
     currentY += 30;
 
-    for (const item of details) {
-      const isBullet = item.startsWith('-') || item.startsWith('See also');
-      ctx.font = isBullet ? 'italic 16px sans-serif' : '18px sans-serif';
-      const lh = isBullet ? 22 : 26;
-      currentY = wrapText(ctx, item, width / 2, currentY, width - 80, lh) + 8;
+    for (const item of examples) {
+      const isNote = item.startsWith('-');
+      ctx.font = isNote ? 'italic 16px sans-serif' : '18px sans-serif';
+      const lh = isNote ? 22 : 26;
+      currentY = wrapText(ctx, item, width / 2, currentY, width - 80, lh) + 6;
     }
   }
 
