@@ -33,49 +33,39 @@ export default async function handler(req, res) {
     const wordHtml = await wordRes.text();
     const $ = cheerio.load(wordHtml);
 
-    const word = $('h1').first().text().trim() || 'Unknown';
+    const h1 = $('h1').first();
+    const word = h1.text().trim() || 'Unknown';
     const translation = $('h2').first().text().trim() || '';
 
-    // 1. Remove navigation menus, headers, sidebars, and footers entirely
-    $('#navigation, #nav, nav, .menu, #menu, #sidebar, .sidebar, #footer, footer, #header, header, script, style').remove();
+    // Scope extraction strictly to the main container around the word header
+    const $container = h1.closest('div, td, main');
 
+    // Convert <br> tags into actual line breaks before reading text
+    $container.find('br').replaceWith('\n');
+
+    // Extract text line by line
+    const rawLines = $container.text().split('\n');
     const examples = [];
 
-    // 2. Select only elements that come after the main translation heading (h2)
-    const $h2 = $('h2').first();
-    const $contentNodes = $h2.length ? $h2.nextAll('p, ul, ol, blockquote') : $('p');
+    for (let line of rawLines) {
+      const clean = line.trim().replace(/\s+/g, ' ');
+      const lower = clean.toLowerCase();
 
-    $contentNodes.each((i, el) => {
-      const $node = $(el);
+      const isUnwanted =
+        !clean ||
+        clean === word ||
+        clean === translation ||
+        lower.startsWith('see also') ||
+        lower.includes('download the pdf') ||
+        lower.includes('kupu o te rā') ||
+        lower.includes('browse ngā kupu') ||
+        lower.includes('test me') ||
+        lower.includes('copyright');
 
-      if ($node.is('ul') || $node.is('ol')) {
-        // Extract individual list items separately so notes stay on their own lines
-        $node.find('li').each((_, li) => {
-          const text = $(li).text().trim().replace(/\s+/g, ' ');
-          if (text && !text.toLowerCase().startsWith('see also')) {
-            examples.push(`- ${text.replace(/^-\s*/, '')}`);
-          }
-        });
-      } else {
-        // Extract paragraph text blocks
-        const text = $node.text().trim().replace(/\s+/g, ' ');
-        const lower = text.toLowerCase();
-
-        const isUnwanted =
-          !text ||
-          text === word ||
-          text === translation ||
-          lower.startsWith('see also') ||
-          lower.includes('download the pdf') ||
-          lower.includes('browse ngā kupu') ||
-          lower.includes('test me') ||
-          lower.includes('kupu o te rā');
-
-        if (!isUnwanted) {
-          examples.push(text);
-        }
+      if (!isUnwanted && !examples.includes(clean)) {
+        examples.push(clean);
       }
-    });
+    }
 
     return res.status(200).json({
       word,
